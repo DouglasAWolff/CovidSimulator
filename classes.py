@@ -15,5 +15,9 @@ class Person:
 
 
 class People:
-    def __init__(self, number_of_people, app):
-        people_array = [Person()]
+    def __init__(self, screensize, number_of_people, _app):
+        self.people_array = [Person([], screensize, _app) for i in range(number_of_people)] # fills the people array with people
+
+    def update(self):
+        for i in range(len(self.people_array)):
+            self.people_array[i].update()

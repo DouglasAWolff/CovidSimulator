@@ -3,10 +3,10 @@ import classes
 
 screensize = [600,400]
 app = processing_py.App(600, 400)  # create window: width, height
-person = classes.Person([1, 2, 3, 4, 5], screensize, app)
+people = classes.People(screensize, 20, app)
 
 while (True):
     app.background(255, 255, 255)  # set background:  red, green, blue
-    person.update()
+    people.update()
 
     app.redraw()  # refresh the window
