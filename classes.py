@@ -1,6 +1,7 @@
 import random
 import math
 
+
 def find_distance(position1, position2):  # takes in two coordinates and spits out the distance between them
     distance1 = position1[0] - position2[0]
     distance2 = position1[1] - position2[1]
@@ -21,15 +22,16 @@ class Person:
         self.app.fill(150, 150, 150)  # fills in the circle
         self.app.ellipse(self.position[0], self.position[1], 50, 50)  # draws a circle at the position of the person
 
-    def find_nearest_neighbours(self, number_to_find):  # takes in a number and then spits out that number of closest neighbours
+    def find_neighbours_in_aproximate_distance(self, distance, plusminus):  # takes in a number and then spits out that number of closest neighbours
         people_distances = []
         for _person in self.people.people_array:
             people_distances.append([find_distance(self.position, _person.position), _person.index_in_people_array])
         people_distances.sort()
 
-        people = [distance_person[1] for distance_person in people_distances]
+        people_in_distance = [distance_person[1] for distance_person in people_distances if
+                              distance_person[0] < random.randint(distance - plusminus, distance + plusminus)]
 
-        return people[0:number_to_find + 1]
+        return people_in_distance
 
     # def infect(self):
 
@@ -48,23 +50,26 @@ class Connection:
         self.coords2 = self.people.get_coords_for_person(self.person2)
         self.app.line(self.coords1[0], self.coords1[1], self.coords2[0], self.coords2[1])
 
-
 class Connections:
     def __init__(self, _people, _app):
         self.app = _app
         self.people = _people
         self.connections = []
+        for first_person in range(
+                len(self.people.people_array)):  # iterates through the people array, setting first person to the index
+            for second_person in self.people.people_array[
+                first_person].connected_to:  # iterates through the connections array of the first person
+                self.connections.append(Connection(first_person, second_person, self.people,
+                                                   self.app))  # appends a connection to the connections list
 
     def update(self):
-        self.connections = []
 
-        for first_person in range(len(self.people.people_array)):  # iterates through the people array, setting first person to the index
-            for second_person in self.people.people_array[first_person].connected_to:  # iterates through the connections array of the first person
-                self.connections.append(Connection(first_person, second_person, self.people, self.app))  # appends a connection to the connections list
 
         for connection in self.connections:
             connection.update()
 
+    def is_connection_crossing_another(self, first_person, second_person):
+        pass
 
 class People:
     def __init__(self, screensize, number_of_people, _app):
@@ -74,8 +79,7 @@ class People:
             range(number_of_people)]  # fills the people array with people
 
         for person in self.people_array:
-            person.connected_to = person.find_nearest_neighbours(3)
-
+            person.connected_to = person.find_neighbours_in_aproximate_distance(200, 200)
 
     def update(self):  # calls the update function on all the people
         for i in range(len(self.people_array)):
