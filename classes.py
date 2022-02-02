@@ -15,8 +15,9 @@ class Person:
 
 
 class Connection:
-    def __init__(self, person1, person2, _people):
+    def __init__(self, person1, person2, _people, _app):
         self.people = _people
+        self.app = _app
         self.person1 = person1
         self.person2 = person2
         self.coords1 = self.people.get_coords_for_person(person1)
@@ -25,13 +26,31 @@ class Connection:
     def update(self):
         self.coords1 = self.people.get_coords_for_person(self.person1)
         self.coords2 = self.people.get_coords_for_person(self.person2)
+        self.app.line(self.coords1[0], self.coords1[1], self.coords2[0], self.coords2[1])
 
+
+class Connections:
+    def __init__(self, _people, _app):
+        self.app = _app
+        self.people = _people
+        self.connections = []
+
+    def update(self):
+        self.connections = []
+
+        for first_person in range(len(self.people.people_array)):  # iterates through the people array, setting first person to the index
+            for second_person in self.people.people_array[first_person].connections:  # iterates through the connections array of the first person
+                self.connections.append(Connection(first_person, second_person, self.people, self.app))  # appends a connection to the connections list
+
+        for connection in self.connections:
+            connection.update()
 
 
 class People:
     def __init__(self, screensize, number_of_people, _app):
         self.people_array = [
-            Person([], screensize, [random.randint(0, screensize[0]), random.randint(0, screensize[1])], _app) for i in
+            Person([random.randint(0, number_of_people)], screensize,
+                   [random.randint(0, screensize[0]), random.randint(0, screensize[1])], _app) for i in
             range(number_of_people)]  # fills the people array with people
 
     def update(self):  # calls the update function on all the people
