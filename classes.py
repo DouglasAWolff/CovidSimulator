@@ -14,11 +14,29 @@ class Person:
     # def infect(self):
 
 
-class People:
-    def __init__(self, screensize, number_of_people, _app):
-
-        self.people_array = [Person([], screensize, [random.randint(0, screensize[0]), random.randint(0, screensize[1])], _app) for i in range(number_of_people)] # fills the people array with people
+class Connection:
+    def __init__(self, person1, person2, _people):
+        self.people = _people
+        self.person1 = person1
+        self.person2 = person2
+        self.coords1 = self.people.get_coords_for_person(person1)
+        self.coords2 = self.people.get_coords_for_person(person2)
 
     def update(self):
+        self.coords1 = self.people.get_coords_for_person(self.person1)
+        self.coords2 = self.people.get_coords_for_person(self.person2)
+
+
+
+class People:
+    def __init__(self, screensize, number_of_people, _app):
+        self.people_array = [
+            Person([], screensize, [random.randint(0, screensize[0]), random.randint(0, screensize[1])], _app) for i in
+            range(number_of_people)]  # fills the people array with people
+
+    def update(self):  # calls the update function on all the people
         for i in range(len(self.people_array)):
             self.people_array[i].update()
+
+    def get_coords_for_person(self, index):  # returns the coordinates for a person by index
+        return self.people_array[index].position
