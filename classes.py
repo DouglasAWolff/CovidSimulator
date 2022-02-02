@@ -49,7 +49,7 @@ class Connections:
 class People:
     def __init__(self, screensize, number_of_people, _app):
         self.people_array = [
-            Person([random.randint(0, number_of_people)], screensize,
+            Person([random.randint(0, number_of_people - 1)], screensize,
                    [random.randint(0, screensize[0]), random.randint(0, screensize[1])], _app) for i in
             range(number_of_people)]  # fills the people array with people
 
