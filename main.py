@@ -3,7 +3,7 @@ import classes
 
 screensize = [1200,800]
 app = processing_py.App(screensize[0],screensize[1])  # create window: width, height
-people = classes.People(screensize, 20, app)
+people = classes.People(screensize, 40, app)
 connections = classes.Connections(people, app)
 
 while (True):
