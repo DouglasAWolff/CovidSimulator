@@ -1,6 +1,13 @@
 import random
 import math
 
+def find_difference(value1, value2):
+    if value1 > value2:
+        return value1 - value2
+    elif value2 > value1:
+        return value2 - value1
+    else:
+        return 0
 
 def find_distance(position1, position2):  # takes in two coordinates and spits out the distance between them
     distance1 = position1[0] - position2[0]
@@ -17,13 +24,14 @@ class Person:
         self.app = _app  # this lets the class person use the class app defined in main.py
         self.people = _people
         self.index_in_people_array = index_in_people_array
+        self.forces = []
+        self.weight = 10
 
     def update(self):
         self.app.fill(150, 150, 150)  # fills in the circle
         self.app.ellipse(self.position[0], self.position[1], 50, 50)  # draws a circle at the position of the person
 
-    def find_neighbours_in_aproximate_distance(self, distance,
-                                               plusminus):  # takes in a number and then spits out that number of closest neighbours
+    def find_neighbours_in_aproximate_distance(self, distance, plusminus):  # takes in a number and then spits out that number of closest neighbours
         people_distances = []
         for _person in self.people.people_array:
             people_distances.append([find_distance(self.position, _person.position), _person.index_in_people_array])
@@ -33,6 +41,9 @@ class Person:
                               distance_person[0] < random.randint(distance - plusminus, distance + plusminus)]
 
         return people_in_distance
+
+    def add_force(self, force, direction):
+        self.forces.append([force, direction])
 
     # def infect(self):
 
@@ -45,11 +56,26 @@ class Connection:
         self.person2 = person2
         self.coords1 = self.people.get_coords_for_person(person1)
         self.coords2 = self.people.get_coords_for_person(person2)
+        self.length_target = 0
+        self.length = self.calculate_length()
+        self.spring_constant = 2
 
     def update(self):
         self.coords1 = self.people.get_coords_for_person(self.person1)
         self.coords2 = self.people.get_coords_for_person(self.person2)
         self.app.line(self.coords1[0], self.coords1[1], self.coords2[0], self.coords2[1])
+        self.length = self.calculate_length()
+        self.calculate_force()
+
+    def calculate_length(self):
+        return find_distance(self.coords1, self.coords2)
+
+    def calculate_force(self):
+        displacement = find_difference(self.length, self.length_target)
+        force = -1 * self.spring_constant * displacement
+
+    def calculate_force_direction(self): #returns a tuple with two values, one for each person
+        pass
 
 
 class Connections:
@@ -59,8 +85,7 @@ class Connections:
         self.connections = []
         for first_person in range(
                 len(self.people.people_array)):  # iterates through the people array, setting first person to the index
-            for second_person in self.people.people_array[
-                first_person].connected_to:  # iterates through the connections array of the first person
+            for second_person in self.people.people_array[first_person].connected_to:  # iterates through the connections array of the first person
                 self.connections.append(Connection(first_person, second_person, self.people,
                                                    self.app))  # appends a connection to the connections list
 
@@ -69,7 +94,7 @@ class Connections:
         for connection in self.connections:
             connection.update()
 
-    def is_connection_crossing_another(self, first_person, second_person):
+    def is_connection_crossing_another(self, first_person, second_person): #might not need this
         pass
 
 
