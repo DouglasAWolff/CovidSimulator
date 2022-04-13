@@ -22,7 +22,8 @@ class Person:
         self.app.fill(150, 150, 150)  # fills in the circle
         self.app.ellipse(self.position[0], self.position[1], 50, 50)  # draws a circle at the position of the person
 
-    def find_neighbours_in_aproximate_distance(self, distance, plusminus):  # takes in a number and then spits out that number of closest neighbours
+    def find_neighbours_in_aproximate_distance(self, distance,
+                                               plusminus):  # takes in a number and then spits out that number of closest neighbours
         people_distances = []
         for _person in self.people.people_array:
             people_distances.append([find_distance(self.position, _person.position), _person.index_in_people_array])
@@ -50,14 +51,18 @@ class Connection:
         self.coords2 = self.people.get_coords_for_person(self.person2)
         self.app.line(self.coords1[0], self.coords1[1], self.coords2[0], self.coords2[1])
 
+
 class Connections:
     def __init__(self, _people, _app):
         self.app = _app
         self.people = _people
         self.connections = []
-        for first_person in range(len(self.people.people_array)):  # iterates through the people array, setting first person to the index
-            for second_person in self.people.people_array[first_person].connected_to:  # iterates through the connections array of the first person
-                self.connections.append(Connection(first_person, second_person, self.people, self.app))  # appends a connection to the connections list
+        for first_person in range(
+                len(self.people.people_array)):  # iterates through the people array, setting first person to the index
+            for second_person in self.people.people_array[
+                first_person].connected_to:  # iterates through the connections array of the first person
+                self.connections.append(Connection(first_person, second_person, self.people,
+                                                   self.app))  # appends a connection to the connections list
 
     def update(self):
 
