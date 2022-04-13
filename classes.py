@@ -55,21 +55,18 @@ class Connections:
         self.app = _app
         self.people = _people
         self.connections = []
-        for first_person in range(
-                len(self.people.people_array)):  # iterates through the people array, setting first person to the index
-            for second_person in self.people.people_array[
-                first_person].connected_to:  # iterates through the connections array of the first person
-                self.connections.append(Connection(first_person, second_person, self.people,
-                                                   self.app))  # appends a connection to the connections list
+        for first_person in range(len(self.people.people_array)):  # iterates through the people array, setting first person to the index
+            for second_person in self.people.people_array[first_person].connected_to:  # iterates through the connections array of the first person
+                self.connections.append(Connection(first_person, second_person, self.people, self.app))  # appends a connection to the connections list
 
     def update(self):
-
 
         for connection in self.connections:
             connection.update()
 
     def is_connection_crossing_another(self, first_person, second_person):
         pass
+
 
 class People:
     def __init__(self, screensize, number_of_people, _app):
