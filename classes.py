@@ -33,7 +33,7 @@ class Person:
         self.index_in_people_array = index_in_people_array
         self.forces = []
         self.mass = 10
-        self.resistance = 1.2
+        self.resistance = 1.08
         self.velocity = [0,0]
 
     def update(self):
@@ -93,7 +93,7 @@ class Connection:
         self.person2_index = person2
         self.coords1 = self.people.get_coords_for_person(person1)
         self.coords2 = self.people.get_coords_for_person(person2)
-        self.length_target = 50
+        self.length_target = 200
         self.length = self.calculate_length()
         self.spring_constant = 0.08
 
@@ -112,7 +112,7 @@ class Connection:
         return find_distance(self.coords1, self.coords2)
 
     def calculate_force(self):
-        displacement = abs(self.length_target - self.length)
+        displacement = self.length - self.length_target
         # find_difference(self.length, self.length_target)
         force = -1 * self.spring_constant * displacement
         return force
