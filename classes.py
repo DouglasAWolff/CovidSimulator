@@ -36,13 +36,20 @@ class Person:
         self.resistance = 1.08
         self.velocity = [0,0]
         self.selected = False
+        self.size = 30 + (5 * len(self.connected_to))
+        self.color = (150, 150 + (10 * len(self.connected_to)), 150 + (10 * len(self.connected_to)))
+        self.screensize = screensize
 
     def update(self):
         self.calculate_velocity_vector()
+        self.move_away_if_touching_walls()
         self.apply_velocity()
 
+
+        self.size = 30 + (5 * len(self.connected_to))
+
         self.app.fill(150, 150 + (10 * len(self.connected_to)), 150 + (10 * len(self.connected_to)))  # fills in the circle
-        self.app.ellipse(self.position[0], self.position[1], 30 + (5 * len(self.connected_to)), 30 + (5 * len(self.connected_to)))  # draws a circle at the position of the person
+        self.app.ellipse(self.position[0], self.position[1], self.size, self.size)  # draws a circle at the position of the person
 
 
     def find_neighbours_in_approximate_distance(self, distance,
@@ -85,7 +92,17 @@ class Person:
         self.position[0] += self.velocity[0]
         self.position[1] += self.velocity[1]
 
-    # def infect(self):
+    def move_away_if_touching_walls(self):
+        if self.position[0] - self.size < 0:
+            self.velocity[0] += 50 / self.mass
+        if self.position[1]  - self.size < 0:
+            self.velocity[1] += 50 / self.mass
+        if self.position[0] + self.size > self.screensize[0]:
+            self.velocity[0] -= 50 / self.mass
+        if self.position[1] + self.size > self.screensize[1]:
+            self.velocity[1] -= 50 / self.mass
+
+                # def infect(self):
 
 
 class Connection:
