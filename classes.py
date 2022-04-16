@@ -35,15 +35,18 @@ class Person:
         self.mass = 10
         self.resistance = 1.08
         self.velocity = [0,0]
+        self.selected = False
 
     def update(self):
-        self.app.fill(150, 150, 150)  # fills in the circle
-        self.app.ellipse(self.position[0], self.position[1], 50, 50)  # draws a circle at the position of the person
         self.calculate_velocity_vector()
         self.apply_velocity()
 
-    def find_neighbours_in_aproximate_distance(self, distance,
-                                               plusminus):  # takes in a number and then spits out that number of closest neighbours
+        self.app.fill(150, 150 + (10 * len(self.connected_to)), 150 + (10 * len(self.connected_to)))  # fills in the circle
+        self.app.ellipse(self.position[0], self.position[1], 30 + (5 * len(self.connected_to)), 30 + (5 * len(self.connected_to)))  # draws a circle at the position of the person
+
+
+    def find_neighbours_in_approximate_distance(self, distance,
+                                                plusminus):  # takes in a number and then spits out that number of closest neighbours
         people_distances = []
         for _person in self.people.people_array:
             people_distances.append([find_distance(self.position, _person.position), _person.index_in_people_array])
@@ -93,20 +96,25 @@ class Connection:
         self.person2_index = person2
         self.coords1 = self.people.get_coords_for_person(person1)
         self.coords2 = self.people.get_coords_for_person(person2)
-        self.length_target = 200
+        self.length_target = random.randint(200,250)
         self.length = self.calculate_length()
         self.spring_constant = 0.08
 
     def update(self):
         self.coords1 = self.people.get_coords_for_person(self.person1_index)
         self.coords2 = self.people.get_coords_for_person(self.person2_index)
-        self.app.line(self.coords1[0], self.coords1[1], self.coords2[0], self.coords2[1])
+
         self.length = self.calculate_length()
         force = self.calculate_force()
         direction1, direction2 = self.calculate_force_direction()
 
         self.people.people_array[self.person1_index].add_force(force, direction1)
         self.people.people_array[self.person2_index].add_force(force, direction2)
+
+        self.coords1 = self.people.get_coords_for_person(self.person1_index)
+        self.coords2 = self.people.get_coords_for_person(self.person2_index)
+
+        self.app.line(self.coords1[0], self.coords1[1], self.coords2[0], self.coords2[1])
 
     def calculate_length(self):
         return find_distance(self.coords1, self.coords2)
@@ -149,7 +157,7 @@ class People:
             Person(screensize, [random.randint(0, screensize[0]), random.randint(0, screensize[1])], _app, self, i) for i in range(number_of_people)]  # fills the people array with people
 
         for person in self.people_array:
-            person.connected_to = person.find_neighbours_in_aproximate_distance(200, 200)
+            person.connected_to =  person.find_neighbours_in_approximate_distance(250,50)    #[i for i in [random.choice(self.people_array).index_in_people_array for i in range(random.choice([1,1,1,1,1,1,2,3,4]))] if not i == person.index_in_people_array]
 
     def update(self):  # calls the update function on all the people
         for i in range(len(self.people_array)):
