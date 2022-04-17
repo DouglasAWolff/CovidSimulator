@@ -1,6 +1,8 @@
 import random
 import math
 
+import mouse
+
 
 def find_difference(value1, value2):
     if value1 > value2:
@@ -36,21 +38,40 @@ class Person:
         self.resistance = 1.08
         self.velocity = [0,0]
         self.selected = False
-        self.size = 30 + (5 * len(self.connected_to))
-        self.color = (150, 150 + (10 * len(self.connected_to)), 150 + (10 * len(self.connected_to)))
+        self.size = 30 + (2.5 * len(self.connected_to))
+        self.color = (150, 150 + (5 * len(self.connected_to)), 150 + (5 * len(self.connected_to)))
         self.screensize = screensize
 
-    def update(self):
-        self.calculate_velocity_vector()
-        self.move_away_if_touching_walls()
-        self.apply_velocity()
+    def update(self, check_mouse=False):
+        if check_mouse:
+            if self.position[0] + self.size > self.app.mouseX > self.position[0] - self.size:
+                if self.position[1] + self.size > self.app.mouseY > self.position[1] - self.size:
+                    self.selected = True
+                    self.people.person_selected = True
+
+        if self.selected:
+            if mouse.is_pressed(button='left'):
+                self.position = [self.app.mouseX, self.app.mouseY]
+            else:
+                self.selected = False
+                self.people.person_selected = False
+                self.calculate_velocity_vector()
+                self.move_away_if_touching_walls()
+                self.apply_velocity()
+
+        else:
+            self.calculate_velocity_vector()
+            self.move_away_if_touching_walls()
+            self.apply_velocity()
 
 
-        self.size = 30 + (5 * len(self.connected_to))
+        self.size = 30 + (2.5 * len(self.connected_to))
 
-        self.app.fill(150, 150 + (10 * len(self.connected_to)), 150 + (10 * len(self.connected_to)))  # fills in the circle
+
+
+    def draw(self):
+        self.app.fill(150, 150 + (5 * len(self.connected_to)), 150 + (5 * len(self.connected_to)))  # fills in the circle
         self.app.ellipse(self.position[0], self.position[1], self.size, self.size)  # draws a circle at the position of the person
-
 
     def find_neighbours_in_approximate_distance(self, distance,
                                                 plusminus):  # takes in a number and then spits out that number of closest neighbours
@@ -60,6 +81,7 @@ class Person:
         people_distances.sort()
 
         people_in_distance = [distance_person[1] for distance_person in people_distances if distance_person[0] < random.randint(distance - plusminus, distance + plusminus) and distance_person[1] != self.index_in_people_array]
+
 
         return people_in_distance
 
@@ -102,7 +124,7 @@ class Person:
         if self.position[1] + self.size > self.screensize[1]:
             self.velocity[1] -= 50 / self.mass
 
-                # def infect(self):
+
 
 
 class Connection:
@@ -128,9 +150,7 @@ class Connection:
         self.people.people_array[self.person1_index].add_force(force, direction1)
         self.people.people_array[self.person2_index].add_force(force, direction2)
 
-        self.coords1 = self.people.get_coords_for_person(self.person1_index)
-        self.coords2 = self.people.get_coords_for_person(self.person2_index)
-
+    def draw(self):
         self.app.line(self.coords1[0], self.coords1[1], self.coords2[0], self.coords2[1])
 
     def calculate_length(self):
@@ -154,15 +174,18 @@ class Connections:
         self.people = _people
         self.connections = []
         for first_person in range(len(self.people.people_array)):  # iterates through the people array, setting first person to the index
-            print(first_person)
             for second_person in self.people.people_array[first_person].connected_to:  # iterates through the connections array of the first person
-                print(second_person)
                 self.connections.append(Connection(first_person, second_person, self.people, self.app))  # appends a connection to the connections list
+                self.people.people_array[second_person].connected_to.append(first_person)
 
     def update(self):
 
         for connection in self.connections:
             connection.update()
+
+    def draw(self):
+        for connection in self.connections:
+            connection.draw()
 
     def is_connection_crossing_another(self, first_person, second_person):  # might not need this
         pass
@@ -170,15 +193,29 @@ class Connections:
 
 class People:
     def __init__(self, screensize, number_of_people, _app):
+        self.app = _app
+        self.clicked = False
+        self.person_selected = False
         self.people_array = [
             Person(screensize, [random.randint(0, screensize[0]), random.randint(0, screensize[1])], _app, self, i) for i in range(number_of_people)]  # fills the people array with people
 
         for person in self.people_array:
-            person.connected_to =  person.find_neighbours_in_approximate_distance(250,50)    #[i for i in [random.choice(self.people_array).index_in_people_array for i in range(random.choice([1,1,1,1,1,1,2,3,4]))] if not i == person.index_in_people_array]
+            person.connected_to = person.find_neighbours_in_approximate_distance(300,0)    #[i for i in [random.choice(self.people_array).index_in_people_array for i in range(random.choice([1,1,1,1,1,1,2,3,4]))] if not i == person.index_in_people_array]
 
     def update(self):  # calls the update function on all the people
+        if mouse.is_pressed(button='left'):
+            if not self.person_selected:
+                self.clicked = True # could try putting a K-D tree here soon
+
         for i in range(len(self.people_array)):
-            self.people_array[i].update()
+            self.people_array[i].update(self.clicked)
+
+        self.clicked = False
+
+    def draw(self):
+        for person in self.people_array:
+            person.draw()
+
 
     def get_coords_for_person(self, index):  # returns the coordinates for a person by index
         return self.people_array[index].position
