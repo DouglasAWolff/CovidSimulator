@@ -45,23 +45,6 @@ class Person:
         self.been_infected_for = 0
         self.deleted = False
 
-
-    def delete(self):
-        self.infected = False
-        self.been_infected_for = 0
-        self.color = (0,0,0)
-        self.size = 0.00000000000000000000000000000000000000000000000001
-        self.selected = False
-        self.velocity = [0,0]
-        self.resistance = 1000
-        self.mass = 0.000000000000000000000000000000001
-        self.forces = []
-        self.position = [0,0]
-        self.connected_to = []
-        self.deleted = True
-        print("deleted")
-
-
     def update(self, check_mouse_left=False, check_mouse_right=False):
         if not self.deleted:
             if check_mouse_left:
@@ -170,6 +153,21 @@ class Person:
                 if random.randint(0,1):
                     self.people.people_array[person].get_infected()
 
+    def delete(self):
+        self.connected_to = []
+        self.infected = False
+        self.been_infected_for = 0
+        self.color = (0,0,0)
+        self.size = 0.00000000000000000000000000000000000000000000000001
+        self.selected = False
+        self.velocity = [0,0]
+        self.resistance = 1000
+        self.mass = 0.000000000000000000000000000000001
+        self.forces = []
+        self.position = [0,0]
+        self.deleted = True
+        print("deleted")
+
 
 class Connection:
     def __init__(self, _index, person1, person2, _connections, _people, _app):
@@ -183,7 +181,7 @@ class Connection:
         self.coords2 = self.people.get_coords_for_person(person2)
         self.length_target = random.randint(200, 250)
         self.length = self.calculate_length()
-        self.spring_constant = 0.08
+        self.spring_constant = 0.02
         self.deleted = False
 
     def update(self):

@@ -9,7 +9,7 @@ connections = classes.Connections(people, app)
 
 people.infect_random_person()
 
-turn_timer = time.time()
+turn_timer = time.time() + 30
 
 while True:
     if time.time() - turn_timer > 1:
