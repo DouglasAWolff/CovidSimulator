@@ -43,42 +43,67 @@ class Person:
         self.screensize = screensize
         self.infected = False
         self.been_infected_for = 0
+        self.deleted = False
 
-    def update(self, check_mouse=False):
-        if check_mouse:
-            if self.position[0] + self.size > self.app.mouseX > self.position[0] - self.size:
-                if self.position[1] + self.size > self.app.mouseY > self.position[1] - self.size:
-                    self.selected = True
-                    self.people.person_selected = True
 
-        if self.selected:
-            if mouse.is_pressed(button='left'):
-                self.position = [self.app.mouseX, self.app.mouseY]
+    def delete(self):
+        self.infected = False
+        self.been_infected_for = 0
+        self.color = (0,0,0)
+        self.size = 0.00000000000000000000000000000000000000000000000001
+        self.selected = False
+        self.velocity = [0,0]
+        self.resistance = 1000
+        self.mass = 0.000000000000000000000000000000001
+        self.forces = []
+        self.position = [0,0]
+        self.connected_to = []
+        self.deleted = True
+        print("deleted")
+
+
+    def update(self, check_mouse_left=False, check_mouse_right=False):
+        if not self.deleted:
+            if check_mouse_left:
+                if self.position[0] + self.size > self.app.mouseX > self.position[0] - self.size:
+                    if self.position[1] + self.size > self.app.mouseY > self.position[1] - self.size:
+                        self.selected = True
+                        self.people.person_selected = True
+
+            if check_mouse_right:
+                if self.position[0] + self.size > self.app.mouseX > self.position[0] - self.size:
+                    if self.position[1] + self.size > self.app.mouseY > self.position[1] - self.size:
+                        self.delete()
+                        return
+
+            if self.selected:
+                if mouse.is_pressed(button='left'):
+                    self.position = [self.app.mouseX, self.app.mouseY]
+                else:
+                    self.selected = False
+                    self.people.person_selected = False
+                    self.calculate_velocity_vector()
+                    self.move_away_if_touching_walls()
+                    self.apply_velocity()
+
             else:
-                self.selected = False
-                self.people.person_selected = False
                 self.calculate_velocity_vector()
                 self.move_away_if_touching_walls()
                 self.apply_velocity()
 
-        else:
-            self.calculate_velocity_vector()
-            self.move_away_if_touching_walls()
-            self.apply_velocity()
+            if self.infected:
+                self.color = (255,0,0)
 
-        if self.infected:
-            self.color = (255,0,0)
+            else:
+                self.color = (150, 150 + (5 * len(self.connected_to)), 150 + (5 * len(self.connected_to)))
 
-        else:
-            self.color = (150, 150 + (5 * len(self.connected_to)), 150 + (5 * len(self.connected_to)))
-
-
-        self.size = 30 + (2.5 * len(self.connected_to))
+            self.size = 30 + (2.5 * len(self.connected_to))
 
     def draw(self):
-        self.app.fill(self.color[0], self.color[1], self.color[2])  # fills in the circle
-        self.app.ellipse(self.position[0], self.position[1], self.size,
-                         self.size)  # draws a circle at the position of the person
+        if not self.deleted:
+            self.app.fill(self.color[0], self.color[1], self.color[2])  # fills in the circle
+            self.app.ellipse(self.position[0], self.position[1], self.size,
+                             self.size)  # draws a circle at the position of the person
 
     def find_neighbours_in_approximate_distance(self, distance, plusminus):  # takes in a number and then spits out that number of closest neighbours
         people_distances = []
@@ -147,7 +172,9 @@ class Person:
 
 
 class Connection:
-    def __init__(self, person1, person2, _people, _app):
+    def __init__(self, _index, person1, person2, _connections, _people, _app):
+        self.index = _index
+        self.connections = _connections
         self.people = _people
         self.app = _app
         self.person1_index = person1
@@ -157,20 +184,25 @@ class Connection:
         self.length_target = random.randint(200, 250)
         self.length = self.calculate_length()
         self.spring_constant = 0.08
+        self.deleted = False
 
     def update(self):
-        self.coords1 = self.people.get_coords_for_person(self.person1_index)
-        self.coords2 = self.people.get_coords_for_person(self.person2_index)
+        if not self.deleted:
+            self.del_if_doesnt_exist()
 
-        self.length = self.calculate_length()
-        force = self.calculate_force()
-        direction1, direction2 = self.calculate_force_direction()
+            self.coords1 = self.people.get_coords_for_person(self.person1_index)
+            self.coords2 = self.people.get_coords_for_person(self.person2_index)
 
-        self.people.people_array[self.person1_index].add_force(force, direction1)
-        self.people.people_array[self.person2_index].add_force(force, direction2)
+            self.length = self.calculate_length()
+            force = self.calculate_force()
+            direction1, direction2 = self.calculate_force_direction()
+
+            self.people.people_array[self.person1_index].add_force(force, direction1)
+            self.people.people_array[self.person2_index].add_force(force, direction2)
 
     def draw(self):
-        self.app.line(self.coords1[0], self.coords1[1], self.coords2[0], self.coords2[1])
+        if not self.deleted:
+            self.app.line(self.coords1[0], self.coords1[1], self.coords2[0], self.coords2[1])
 
     def calculate_length(self):
         return find_distance(self.coords1, self.coords2)
@@ -184,7 +216,20 @@ class Connection:
     def calculate_force_direction(self):  # returns a tuple with two values, one for each person
         angle2 = find_angle_from_one_point_to_another(self.coords1, self.coords2)
         angle1 = find_angle_from_one_point_to_another(self.coords2, self.coords1)
-        return (angle1, angle2)
+        return angle1, angle2
+
+    def check_if_still_exists(self):
+        exists = True
+
+        if not self.people.people_array[self.person1_index].connected_to.count(self.person2_index) or not  self.people.people_array[self.person2_index].connected_to.count(self.person1_index):
+            exists = False
+
+
+        return exists
+
+    def del_if_doesnt_exist(self):
+        if not self.check_if_still_exists():
+            self.deleted = True
 
 
 class Connections:
@@ -194,11 +239,10 @@ class Connections:
         self.connections = []
         for first_person in range(len(self.people.people_array)):  # iterates through the people array, setting first person to the index
             for second_person in self.people.people_array[first_person].connected_to:  # iterates through the connections array of the first person
-                self.connections.append(Connection(first_person, second_person, self.people, self.app))  # appends a connection to the connections list
+                self.connections.append(Connection(len(self.connections), first_person, second_person, self, self.people, self.app))  # appends a connection to the connections list
                 self.people.people_array[second_person].connected_to.append(first_person)
 
     def update(self):
-
         for connection in self.connections:
             connection.update()
 
@@ -206,11 +250,13 @@ class Connections:
         for connection in self.connections:
             connection.draw()
 
+   #
 
 class People:
     def __init__(self, screensize, number_of_people, _app):
         self.app = _app
-        self.clicked = False
+        self.clicked_left = False
+        self.clicked_right = False
         self.person_selected = False
         self.people_array = [Person(screensize, [random.randint(0, screensize[0]), random.randint(0, screensize[1])], _app, self, i) for i in range(number_of_people)]  # fills the people array with people
 
@@ -220,13 +266,17 @@ class People:
     def update(self):  # calls the update function on all the people
         if mouse.is_pressed(button='left'):
             if not self.person_selected:
-                self.clicked = True  # could try putting a K-D tree here soon
+                self.clicked_left = True  # could try putting a K-D tree here soon
+
+        if mouse.is_pressed(button='right'):
+            self.clicked_right = True
 
         for i in range(len(self.people_array)):
-            self.people_array[i].update(self.clicked)
+            if not self.people_array[i].deleted:
+                self.people_array[i].update(self.clicked_left, self.clicked_right)
 
-        self.clicked = False
-
+        self.clicked_left = False
+        self.clicked_right = False
     def draw(self):
         for person in self.people_array:
             person.draw()
