@@ -80,13 +80,6 @@ class Person:
         self.app.ellipse(self.position[0], self.position[1], self.size,
                          self.size)  # draws a circle at the position of the person
 
-    def take_turn(self):
-        if self.been_infected_for > 1:
-            self.infect_others()
-
-        if self.infected:
-            self.been_infected_for += 1
-
     def find_neighbours_in_approximate_distance(self, distance, plusminus):  # takes in a number and then spits out that number of closest neighbours
         people_distances = []
         for _person in self.people.people_array:
@@ -134,9 +127,17 @@ class Person:
         if self.position[1] + self.size > self.screensize[1]:
             self.velocity[1] -= 50 / self.mass
 
+    def take_turn(self):
+        if self.been_infected_for > 2:
+            self.infect_others()
+
+        if self.infected:
+            self.been_infected_for += 1
+
     def get_infected(self):
-        self.infected = True
-        print("infected")
+        if not self.infected:
+            self.infected = True
+            print("infected")
 
     def infect_others(self):
         if self.infected:
@@ -193,8 +194,7 @@ class Connections:
         self.connections = []
         for first_person in range(len(self.people.people_array)):  # iterates through the people array, setting first person to the index
             for second_person in self.people.people_array[first_person].connected_to:  # iterates through the connections array of the first person
-                self.connections.append(Connection(first_person, second_person, self.people,
-                                                   self.app))  # appends a connection to the connections list
+                self.connections.append(Connection(first_person, second_person, self.people, self.app))  # appends a connection to the connections list
                 self.people.people_array[second_person].connected_to.append(first_person)
 
     def update(self):
@@ -205,9 +205,6 @@ class Connections:
     def draw(self):
         for connection in self.connections:
             connection.draw()
-
-    def is_connection_crossing_another(self, first_person, second_person):  # might not need this
-        pass
 
 
 class People:
