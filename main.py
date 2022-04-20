@@ -4,12 +4,12 @@ import time
 
 screensize = [1800,1000]
 app = processing_py.App(screensize[0],screensize[1])  # create window: width, height
-people = classes.People(screensize, 40, app)
-connections = classes.Connections(people, app)
+people = classes.People(screensize, 200, app)
+
 
 people.infect_random_person()
 
-turn_timer = time.time() + 30
+turn_timer = time.time() + 300000
 
 while True:
     if time.time() - turn_timer > 1:
@@ -17,13 +17,11 @@ while True:
         turn_timer = time.time()
         print(f"turn,   {time.time()}")
 
-
     app.background(255, 255, 255)  # set background:  red, green, blue
 
-
     people.update()
-    connections.update()
-    connections.draw()
+
+
     people.draw()
 
     app.redraw()  # refresh the window

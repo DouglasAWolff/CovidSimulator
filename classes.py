@@ -2,7 +2,9 @@ import random
 import math
 
 import mouse
+import setuptools
 
+universal_gravitational_constant = 6.673 * (10 ^ -11)
 
 def find_difference(value1, value2):
     if value1 > value2:
@@ -34,8 +36,8 @@ class Person:
         self.people = _people
         self.index_in_people_array = index_in_people_array
         self.forces = []
-        self.mass = 10
-        self.resistance = 1.08
+        self.mass = 2
+        self.resistance = 1.1
         self.velocity = [0, 0]
         self.selected = False
         self.size = 30 + (2.5 * len(self.connected_to))
@@ -67,11 +69,15 @@ class Person:
                     self.people.person_selected = False
                     self.calculate_velocity_vector()
                     self.move_away_if_touching_walls()
+                    self.add_gravity_force()
+                    self.add_anti_gravity_force()
                     self.apply_velocity()
 
             else:
                 self.calculate_velocity_vector()
                 self.move_away_if_touching_walls()
+                self.add_gravity_force()
+                self.add_anti_gravity_force()
                 self.apply_velocity()
 
             if self.infected:
@@ -100,7 +106,36 @@ class Person:
     def add_force(self, force, direction):
         self.forces.append([force, direction])
 
-    def calculate_total_forces(self):
+    def add_gravity_force(self):
+        for person in self.people.people_array:
+            force = self.calculate_gravity_for_node_and_self(person)
+            self.add_force(force[0], force[1])
+
+
+    def calculate_gravity_for_node_and_self(self,node):
+        force = (universal_gravitational_constant * self.mass * node.mass) / (find_distance(self.position, node.position) + 0.001)
+        direction = find_angle_from_one_point_to_another(self.position, node.position)
+
+
+        if force < -500 or 500 < force:  # not really fixed just stopped from being a problem
+            force = 0
+        return [-force / 3, direction]
+
+    def add_anti_gravity_force(self):
+        for person in self.people.people_array:
+            force = self.calculate_anti_gravity_for_node_and_self(person)
+            self.add_force(force[0], force[1])
+
+    def calculate_anti_gravity_for_node_and_self(self, node):
+        force = (universal_gravitational_constant * self.mass * node.mass) / ((find_distance(self.position, node.position) * find_distance(self.position, node.position) + 0.0001) / 15)
+        direction = find_angle_from_one_point_to_another(self.position, node.position)
+
+
+        if force < -500 or 500 < force:  # not really fixed just stopped from being a problem
+            force = 0
+        return [force * 3, direction]
+
+    def calculate_total_force(self):
         resultant_force = [0, 0]
         magnitudes_and_force_vectors = []
         for force in self.forces:
@@ -114,7 +149,7 @@ class Person:
         return resultant_force
 
     def calculate_velocity_vector(self):
-        total_force = self.calculate_total_forces()
+        total_force = self.calculate_total_force()
         self.velocity[0] = self.velocity[0] / self.resistance
         self.velocity[1] = self.velocity[1] / self.resistance
 
@@ -126,14 +161,25 @@ class Person:
         self.position[1] += self.velocity[1]
 
     def move_away_if_touching_walls(self):
-        if self.position[0] - self.size < 0:
-            self.velocity[0] += 50 / self.mass
-        if self.position[1] - self.size < 0:
-            self.velocity[1] += 50 / self.mass
-        if self.position[0] + self.size > self.screensize[0]:
-            self.velocity[0] -= 50 / self.mass
+        distance_from_wall_where_force_takes_affect = 30
+        force_at_wall = 50
+        if self.position[0] - self.size < distance_from_wall_where_force_takes_affect:
+            wall_distance = abs(self.position[0])
+            angle = math.radians(0)
+            self.add_force(force_at_wall / (wall_distance + 0.001), angle)
+        if self.position[1] - self.size < distance_from_wall_where_force_takes_affect:
+            wall_distance = abs(self.position[1])
+            angle = math.radians(90)
+            self.add_force(force_at_wall / (wall_distance + 0.001), angle)
+        if self.position[0] + self.size > (self.screensize[0] - distance_from_wall_where_force_takes_affect):
+            wall_distance = abs(self.screensize[0] - self.position[0])
+            angle = math.radians(180)
+            self.add_force(force_at_wall / (wall_distance + 0.001), angle)
         if self.position[1] + self.size > self.screensize[1]:
-            self.velocity[1] -= 50 / self.mass
+            wall_distance = abs(self.screensize[1] - self.position[1])
+            angle = math.radians(270)
+            self.add_force(force_at_wall / (wall_distance + 0.001), angle)
+
 
     def take_turn(self):
         if self.been_infected_for > 2:
@@ -164,7 +210,6 @@ class Person:
         self.resistance = 1000
         self.mass = 0.000000000000000000000000000000001
         self.forces = []
-        self.position = [0,0]
         self.deleted = True
         print("deleted")
 
@@ -219,7 +264,7 @@ class Connection:
     def check_if_still_exists(self):
         exists = True
 
-        if not self.people.people_array[self.person1_index].connected_to.count(self.person2_index) or not  self.people.people_array[self.person2_index].connected_to.count(self.person1_index):
+        if not self.people.people_array[self.person1_index].connected_to.count(self.person2_index) or not self.people.people_array[self.person2_index].connected_to.count(self.person1_index):
             exists = False
 
 
@@ -259,7 +304,7 @@ class People:
         self.people_array = [Person(screensize, [random.randint(0, screensize[0]), random.randint(0, screensize[1])], _app, self, i) for i in range(number_of_people)]  # fills the people array with people
 
         for person in self.people_array:
-            person.connected_to = person.find_neighbours_in_approximate_distance(300,0)  # [i for i in [random.choice(self.people_array).index_in_people_array for i in range(random.choice([1,1,1,1,1,1,2,3,4]))] if not i == person.index_in_people_array]
+            person.connected_to = person.find_neighbours_in_approximate_distance(0,0)  # [i for i in [random.choice(self.people_array).index_in_people_array for i in range(random.choice([1,1,1,1,1,1,2,3,4]))] if not i == person.index_in_people_array]
 
     def update(self):  # calls the update function on all the people
         if mouse.is_pressed(button='left'):
